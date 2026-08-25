@@ -1,0 +1,36 @@
+services:
+  cerebro:
+    build: .
+    container_name: tvbot_cerebro
+    restart: unless-stopped
+
+    # A TV Box conecta neste IP:porta.
+    ports:
+      - "${TCP_PORT:-9876}:9876"
+
+    networks:
+      - portal
+
+    env_file:
+      - .env
+
+    volumes:
+      # Modelos: voz do Piper, cache do Whisper e (se houver) a wake word
+      # customizada em .onnx. Persistir evita baixar de novo a cada rebuild.
+      - ./models:/models
+
+    # Acesso à GPU (exige nvidia-container-toolkit instalado no host).
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+
+networks:
+  portal:
+    external: true
+    # Se o nome for outro, defina PORTAL_NETWORK no .env.
+    name: ${PORTAL_NETWORK:-portaltcc_default}
+    
